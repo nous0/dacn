@@ -1,0 +1,46 @@
+<routes>
+    <flow id="base_we_mid_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="base_we_mid_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="base_we_mid_truck" type="truck" begin="0" end="7200" vehsPerHour="90" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="base_we_top_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_1w_to_J1" to="J3_to_N_out_3e"/>
+    <flow id="base_we_top_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_1w_to_J1" to="J3_to_N_out_3e"/>
+    <flow id="base_we_bot_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_7_to_J7" to="J9_to_N_out_9"/>
+    <flow id="base_we_bot_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_7_to_J7" to="J9_to_N_out_9"/>
+    
+    <flow id="base_ns_mid_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1800" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="base_ns_mid_car" type="car" begin="0" end="7200" vehsPerHour="540" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="base_ns_mid_truck" type="truck" begin="0" end="7200" vehsPerHour="90" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="base_ns_left_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_1_to_J1" to="J7_to_N_out_7s"/>
+    <flow id="base_ns_left_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_1_to_J1" to="J7_to_N_out_7s"/>
+    <flow id="base_ns_right_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_3_to_J3" to="J9_to_N_out_9s"/>
+    <flow id="base_ns_right_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_3_to_J3" to="J9_to_N_out_9s"/>
+
+    <flow id="base_ew_mid_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_6_to_J6" to="J4_to_N_out_4"/>
+    <flow id="base_ew_mid_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_6_to_J6" to="J4_to_N_out_4"/>
+    <flow id="base_ew_mid_truck" type="truck" begin="0" end="7200" vehsPerHour="90" from="N_out_6_to_J6" to="J4_to_N_out_4"/>
+    <flow id="base_ew_top_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_3e_to_J3" to="J1_to_N_out_1w"/>
+    <flow id="base_ew_top_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_3e_to_J3" to="J1_to_N_out_1w"/>
+    <flow id="base_ew_bot_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_9_to_J9" to="J7_to_N_out_7"/>
+    <flow id="base_ew_bot_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_9_to_J9" to="J7_to_N_out_7"/>
+
+    <flow id="base_sn_mid_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1800" from="N_out_8_to_J8" to="J2_to_N_out_2"/>
+    <flow id="base_sn_mid_car" type="car" begin="0" end="7200" vehsPerHour="540" from="N_out_8_to_J8" to="J2_to_N_out_2"/>
+    <flow id="base_sn_mid_truck" type="truck" begin="0" end="7200" vehsPerHour="90" from="N_out_8_to_J8" to="J2_to_N_out_2"/>
+    <flow id="base_sn_left_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_7s_to_J7" to="J1_to_N_out_1"/>
+    <flow id="base_sn_left_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_7s_to_J7" to="J1_to_N_out_1"/>
+    <flow id="base_sn_right_moto" type="motorcycle" begin="0" end="7200" vehsPerHour="1440" from="N_out_9s_to_J9" to="J3_to_N_out_3"/>
+    <flow id="base_sn_right_car" type="car" begin="0" end="7200" vehsPerHour="360" from="N_out_9s_to_J9" to="J3_to_N_out_3"/>
+    
+    <flow id="peak_morning_we_mid_moto" type="motorcycle" begin="0" end="3600" vehsPerHour="6000" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="peak_morning_we_mid_car" type="car" begin="0" end="3600" vehsPerHour="2250" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="peak_morning_we_mid_bus" type="bus" begin="0" end="3600" vehsPerHour="300" from="N_out_4_to_J4" to="J6_to_N_out_6"/>
+    <flow id="peak_morning_we_top_moto" type="motorcycle" begin="0" end="3600" vehsPerHour="4500" from="N_out_1w_to_J1" to="J3_to_N_out_3e"/>
+    <flow id="peak_morning_we_bot_moto" type="motorcycle" begin="0" end="3600" vehsPerHour="4500" from="N_out_7_to_J7" to="J9_to_N_out_9"/>
+
+    <flow id="peak_afternoon_ns_mid_moto" type="motorcycle" begin="3600" end="7200" vehsPerHour="7500" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="peak_afternoon_ns_mid_car" type="car" begin="3600" end="7200" vehsPerHour="3000" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="peak_afternoon_ns_mid_truck" type="truck" begin="3600" end="7200" vehsPerHour="600" from="N_out_2_to_J2" to="J8_to_N_out_8"/>
+    <flow id="peak_afternoon_ns_left_moto" type="motorcycle" begin="3600" end="7200" vehsPerHour="6000" from="N_out_1_to_J1" to="J7_to_N_out_7s"/>
+    <flow id="peak_afternoon_ns_right_moto" type="motorcycle" begin="3600" end="7200" vehsPerHour="6000" from="N_out_3_to_J3" to="J9_to_N_out_9s"/>
+
+</routes>

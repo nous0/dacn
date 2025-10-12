@@ -26,8 +26,9 @@ if __name__ == "__main__":
     episodes = 4
 
     env = SumoEnvironment(
-        net_file="scenarios/3x3/vn.net.xml",
-        route_file="scenarios/3x3/vn.rou.xml",
+        net_file="scenarios/bk/vn.net.xml",
+        route_file="scenarios/bk/full_routes.xml",
+        additional_sumo_cmd="--additional-files=scenarios/bk/vtype.xml",
         use_gui=False,
         num_seconds=80000,
         min_green=5,

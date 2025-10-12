@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2025-10-11 21:27:19.704127 by randomTrips.py v1_24_0+0000-b72eb3fabc8
+<configuration>
+    <net-file value="vn.net.xml"/>
+    <output-trip-file value="vn.truck.trips.xml"/>
+    <prefix value="truck_"/>
+    <trip-attributes value="type=&quot;truck&quot;"/>
+    <fringe-factor value="5"/>
+    <edge-permission value="truck"/>
+    <period value="40.0"/>
+</configuration>
+-->
+
+<!-- generated on 2025-10-11 21:27:19 by Eclipse SUMO duarouter Version 1.24.0
+<duarouterConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="vn.net.xml"/>
+        <route-files value="vn.truck.trips.xml"/>
+    </input>
+
+    <output>
+        <output-file value="routes.rou.xml"/>
+        <alternatives-output value="NUL"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="3600.0"/>
+    </time>
+
+    <report>
+        <no-warnings value="true"/>
+        <ignore-errors value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</duarouterConfiguration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vehicle id="truck_0" type="truck" depart="0.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J2 J2_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_1" type="truck" depart="40.00">
+        <route edges="J8_to_J5 J5_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_2" type="truck" depart="80.00">
+        <route edges="N_out_6_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_3" type="truck" depart="120.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_4" type="truck" depart="160.00">
+        <route edges="N_out_2_to_J2 J2_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_5" type="truck" depart="200.00">
+        <route edges="J6_to_J5 J5_to_J6"/>
+    </vehicle>
+    <vehicle id="truck_6" type="truck" depart="240.00">
+        <route edges="J2_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_7" type="truck" depart="280.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_8" type="truck" depart="320.00">
+        <route edges="J6_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_9" type="truck" depart="360.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_J5 J5_to_J2 J2_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_10" type="truck" depart="400.00">
+        <route edges="N_out_6_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_11" type="truck" depart="440.00">
+        <route edges="N_out_2_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_12" type="truck" depart="480.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_13" type="truck" depart="520.00">
+        <route edges="J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_14" type="truck" depart="560.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_15" type="truck" depart="600.00">
+        <route edges="N_out_6_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_16" type="truck" depart="640.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_17" type="truck" depart="680.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_18" type="truck" depart="720.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_19" type="truck" depart="760.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_20" type="truck" depart="800.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_21" type="truck" depart="840.00">
+        <route edges="J6_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_22" type="truck" depart="880.00">
+        <route edges="J5_to_J2 J2_to_J1 J1_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_23" type="truck" depart="920.00">
+        <route edges="J5_to_J2 J2_to_J5 J5_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_24" type="truck" depart="960.00">
+        <route edges="N_out_4_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_25" type="truck" depart="1000.00">
+        <route edges="N_out_2_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_26" type="truck" depart="1040.00">
+        <route edges="J8_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_27" type="truck" depart="1080.00">
+        <route edges="N_out_6_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_28" type="truck" depart="1120.00">
+        <route edges="J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_29" type="truck" depart="1160.00">
+        <route edges="J5_to_J6 J6_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_30" type="truck" depart="1200.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_31" type="truck" depart="1240.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_32" type="truck" depart="1280.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_33" type="truck" depart="1320.00">
+        <route edges="J6_to_J5 J5_to_J8 J8_to_J5 J5_to_J2 J2_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_34" type="truck" depart="1360.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_35" type="truck" depart="1400.00">
+        <route edges="J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_36" type="truck" depart="1440.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_37" type="truck" depart="1480.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_38" type="truck" depart="1520.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2"/>
+    </vehicle>
+    <vehicle id="truck_39" type="truck" depart="1560.00">
+        <route edges="J8_to_J5 J5_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_40" type="truck" depart="1600.00">
+        <route edges="N_out_4_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_41" type="truck" depart="1640.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_42" type="truck" depart="1680.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J8 J8_to_J5 J5_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_43" type="truck" depart="1720.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6"/>
+    </vehicle>
+    <vehicle id="truck_44" type="truck" depart="1760.00">
+        <route edges="J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_45" type="truck" depart="1800.00">
+        <route edges="J5_to_J4 J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_46" type="truck" depart="1840.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_47" type="truck" depart="1880.00">
+        <route edges="J4_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_48" type="truck" depart="1920.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6"/>
+    </vehicle>
+    <vehicle id="truck_49" type="truck" depart="1960.00">
+        <route edges="N_out_8_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_50" type="truck" depart="2000.00">
+        <route edges="J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_51" type="truck" depart="2040.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_52" type="truck" depart="2080.00">
+        <route edges="J8_to_J5 J5_to_J4 J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_53" type="truck" depart="2120.00">
+        <route edges="J5_to_J4 J4_to_J5 J5_to_J2"/>
+    </vehicle>
+    <vehicle id="truck_54" type="truck" depart="2160.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_55" type="truck" depart="2200.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_56" type="truck" depart="2240.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_57" type="truck" depart="2280.00">
+        <route edges="N_out_8_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_58" type="truck" depart="2320.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_59" type="truck" depart="2360.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_60" type="truck" depart="2400.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_61" type="truck" depart="2440.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J6"/>
+    </vehicle>
+    <vehicle id="truck_62" type="truck" depart="2480.00">
+        <route edges="J2_to_J5 J5_to_J6 J6_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_63" type="truck" depart="2520.00">
+        <route edges="J2_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_64" type="truck" depart="2560.00">
+        <route edges="N_out_8_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_65" type="truck" depart="2600.00">
+        <route edges="N_out_2_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_66" type="truck" depart="2640.00">
+        <route edges="N_out_8_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_67" type="truck" depart="2680.00">
+        <route edges="J5_to_J2 J2_to_J5 J5_to_J8 J8_to_J5 J5_to_J4"/>
+    </vehicle>
+    <vehicle id="truck_68" type="truck" depart="2720.00">
+        <route edges="J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_69" type="truck" depart="2760.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_70" type="truck" depart="2800.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_71" type="truck" depart="2840.00">
+        <route edges="J8_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_72" type="truck" depart="2880.00">
+        <route edges="N_out_2_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_73" type="truck" depart="2920.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_74" type="truck" depart="2960.00">
+        <route edges="J5_to_J8 J8_to_J5 J5_to_J4 J4_to_N_out_4"/>
+    </vehicle>
+    <vehicle id="truck_75" type="truck" depart="3000.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_76" type="truck" depart="3040.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J6"/>
+    </vehicle>
+    <vehicle id="truck_77" type="truck" depart="3080.00">
+        <route edges="J5_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_78" type="truck" depart="3120.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J6 J6_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_79" type="truck" depart="3160.00">
+        <route edges="J6_to_J5 J5_to_J4 J4_to_J5"/>
+    </vehicle>
+    <vehicle id="truck_80" type="truck" depart="3200.00">
+        <route edges="J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_81" type="truck" depart="3240.00">
+        <route edges="J6_to_J5 J5_to_J8 J8_to_N_out_8"/>
+    </vehicle>
+    <vehicle id="truck_82" type="truck" depart="3280.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_83" type="truck" depart="3320.00">
+        <route edges="J6_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_84" type="truck" depart="3360.00">
+        <route edges="J5_to_J8 J8_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_85" type="truck" depart="3400.00">
+        <route edges="N_out_8_to_J8 J8_to_J5 J5_to_J8"/>
+    </vehicle>
+    <vehicle id="truck_86" type="truck" depart="3440.00">
+        <route edges="N_out_4_to_J4 J4_to_J5 J5_to_J6 J6_to_N_out_6"/>
+    </vehicle>
+    <vehicle id="truck_87" type="truck" depart="3480.00">
+        <route edges="N_out_6_to_J6 J6_to_J5 J5_to_J4 J4_to_J5 J5_to_J2 J2_to_N_out_2"/>
+    </vehicle>
+    <vehicle id="truck_88" type="truck" depart="3520.00">
+        <route edges="J5_to_J2"/>
+    </vehicle>
+    <vehicle id="truck_89" type="truck" depart="3560.00">
+        <route edges="N_out_2_to_J2 J2_to_J5 J5_to_J8 J8_to_J5 J5_to_J4"/>
+    </vehicle>
+</routes>
