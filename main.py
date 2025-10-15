@@ -34,23 +34,29 @@ if __name__ == "__main__":
         }
 
         for episode in range(1, episodes + 1):
-            if episode != 1:
-                initial_states = env.reset()
-                for ts in env.ts_ids:
-                    ql_agents[ts].set_state(env.encode(initial_states[ts], ts))
+            empty_steps = 0
 
-            done = {"__all__": False}
             while not done["__all__"]:
-                actions = {ts: ql_agents[ts].act() for ts in ql_agents.keys()}
-                s, r, done, info = env.step(action=actions)
+                actions = {ts: ql_agents[ts].act() for ts in ql_agents}
+                s, r, done, info = env.step(actions)
 
-                for agent_id in s.keys():
-                    ql_agents[agent_id].learn(
-                        next_state=env.encode(s[agent_id], agent_id),
-                        reward=r[agent_id],
-                        done=done.get(agent_id, False),
-                    )
+                # cập nhật học
+                for ts in s:
+                    ql_agents[ts].learn(env.encode(s[ts], ts), r[ts])
 
-            env.save_csv(f"outputs/4x4/dqn_run{run}", episode)
+                # kiểm tra xe đang hoạt động
+                active_cars = len(env.sumo.vehicle.getIDList()) if hasattr(env, "sumo") else 1
+                total_r = sum(r.values())
+
+                if active_cars == 0 or total_r == 0:
+                    empty_steps += 1
+                else:
+                    empty_steps = 0
+
+                if empty_steps > 200:
+                    print(f"Early stop at step {env.sim_step}: no cars for {empty_steps} steps")
+                    env.save_csv(f"outputs/3x3/dqn_run{run}", episode)
+                    break
+
 
     env.close()
