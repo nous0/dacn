@@ -1,397 +1,321 @@
-"""Deep Q-Network (DQN) Agent for Traffic Signal Control.
+"""
+DQN hoàn chỉnh (sumo-rl compatible + CUDA-ready)
 
-This module implements a DQN agent compatible with the sumo-rl library's QLAgent interface.
-It includes experience replay, target network, and neural network-based Q-value approximation.
+Tính năng:
+- Cấu hình trung tâm (DQNConfig)
+- ReplayBuffer (seeded)
+- QNetwork linh hoạt (hidden_dims)
+- EpsilonGreedy exploration helper
+- DQNAgent tương thích với sumo-rl (act/learn/save/load)
+- Huber loss (Smooth L1), gradient clipping và Polyak (tau) target update
+- Thiết bị tự động: dùng CUDA nếu có
+
+Sử dụng: copy file này vào project và import DQNAgent.
+Mỗi nút (node) có thể khởi tạo một DQNAgent riêng để mở rộng sang multi-agent.
 """
 
-import random
+from dataclasses import dataclass
 from collections import deque
-from typing import Any, List, Tuple
+from typing import Any, Optional, Sequence, Tuple, Dict
+import random
+import math
 
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 
 
+@dataclass
+class DQNConfig:
+    gamma: float = 0.99
+    lr: float = 3e-4
+    batch_size: int = 64
+    buffer_size: int = 100_000
+    start_learning_after: int = 1_000
+    train_freq: int = 1
+    target_update_freq: int = 1_000
+    tau: float = 1.0  # 1.0 -> hard update
+    grad_clip_norm: Optional[float] = 10.0
+    hidden_dims: Tuple[int, ...] = (256, 256)
+    device: Optional[str] = None  # if None, auto-detect
+    seed: int = 0
+
+
 class ReplayBuffer:
-    """Experience replay buffer for storing and sampling transitions."""
+    """Replay buffer storing transitions and returning minibatches.
 
-    def __init__(self, capacity: int = 50000):
-        """Initialize replay buffer.
+    Stored element: (state, action, reward, next_state, done)
+    States are stored as raw numpy arrays (not tensors) to keep memory lean.
+    """
 
-        Args:
-            capacity: Maximum number of transitions to store
-        """
-        self.buffer = deque(maxlen=capacity)
+    def __init__(self, capacity: int = 100_000, seed: int = 0):
+        self.capacity = int(capacity)
+        self.buf = deque(maxlen=self.capacity)
+        random.seed(seed)
 
-    def push(
-        self,
-        state: Any,
-        action: int,
-        reward: float,
-        next_state: Any,
-        done: bool,
-    ):
-        """Store a transition in the buffer.
+    def push(self, state: Any, action: int, reward: float, next_state: Any, done: bool):
+        self.buf.append((np.array(state, dtype=np.float32), int(action), float(reward), np.array(next_state, dtype=np.float32), bool(done)))
 
-        Args:
-            state: Current state
-            action: Action taken
-            reward: Reward received
-            next_state: Next state
-            done: Whether episode is done
-        """
-        self.buffer.append((state, action, reward, next_state, done))
-
-    def sample(self, batch_size: int) -> Tuple[np.ndarray, ...]:
-        """Sample a random batch of transitions.
-
-        Args:
-            batch_size: Number of transitions to sample
-
-        Returns:
-            Tuple of (states, actions, rewards, next_states, dones)
-        """
-        batch = random.sample(self.buffer, batch_size)
-        states, actions, rewards, next_states, dones = zip(*batch)
-
+    def sample(self, batch_size: int):
+        batch = random.sample(self.buf, batch_size)
+        s, a, r, s2, d = zip(*batch)
         return (
-            np.array(states),
-            np.array(actions),
-            np.array(rewards, dtype=np.float32),
-            np.array(next_states),
-            np.array(dones, dtype=np.float32),
+            np.stack(s),
+            np.array(a, dtype=np.int64),
+            np.array(r, dtype=np.float32),
+            np.stack(s2),
+            np.array(d, dtype=np.float32),
         )
 
-    def __len__(self) -> int:
-        """Return current size of buffer."""
-        return len(self.buffer)
+    def __len__(self):
+        return len(self.buf)
 
 
 class QNetwork(nn.Module):
-    """Neural network for Q-value approximation."""
-
-    def __init__(self, state_dim: int, action_dim: int, hidden_dims: List[int] = None):
-        """Initialize Q-network.
-
-        Args:
-            state_dim: Dimension of state space
-            action_dim: Dimension of action space
-            hidden_dims: List of hidden layer dimensions (default: [128, 128])
-        """
-        super(QNetwork, self).__init__()
-
-        if hidden_dims is None:
-            hidden_dims = [128, 128]
-
-        # Build network layers
+    def __init__(self, state_dim: int, action_dim: int, hidden_dims: Sequence[int] = (256, 256)):
+        super().__init__()
         layers = []
-        input_dim = state_dim
-
-        for hidden_dim in hidden_dims:
-            layers.append(nn.Linear(input_dim, hidden_dim))
+        in_dim = int(state_dim)
+        for h in hidden_dims:
+            layers.append(nn.Linear(in_dim, int(h)))
             layers.append(nn.ReLU())
-            input_dim = hidden_dim
+            in_dim = int(h)
+        layers.append(nn.Linear(in_dim, int(action_dim)))
+        self.net = nn.Sequential(*layers)
 
-        layers.append(nn.Linear(input_dim, action_dim))
+        # init
+        for m in self.net:
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight, nonlinearity='relu')
+                nn.init.zeros_(m.bias)
 
-        self.network = nn.Sequential(*layers)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.net(x)
 
-    def forward(self, state: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the network.
 
-        Args:
-            state: State tensor
+class EpsilonGreedy:
+    """Simple epsilon schedule helper.
 
-        Returns:
-            Q-values for each action
-        """
-        return self.network(state)
+    Use .get_epsilon(step) to query epsilon (default exponential decay).
+    """
+
+    def __init__(self, eps_start=1.0, eps_end=0.05, eps_decay=1e-4):
+        self.eps_start = float(eps_start)
+        self.eps_end = float(eps_end)
+        self.eps_decay = float(eps_decay)
+
+    def get_epsilon(self, step: int) -> float:
+        # exponential: eps = eps_end + (eps_start - eps_end) * exp(-decay * step)
+        return float(self.eps_end + (self.eps_start - self.eps_end) * math.exp(-self.eps_decay * step))
 
 
 class DQNAgent:
-    """Deep Q-Network agent compatible with sumo-rl QLAgent interface."""
+    """DQN agent compatible with sumo-rl style interface.
+
+    Key methods:
+        - act() -> action (int)
+        - learn(next_state, reward, done=False) -> perform a learning step
+        - save(path) / load(path)
+
+    Notes:
+        - The agent keeps an internal .state (current observation). Set .state externally on reset if needed.
+        - This implementation assumes continuous observation vectors (numpy arrays or lists). For dict/state spaces, user
+          should pre-process to flattened vectors before passing to DQNAgent.
+    """
 
     def __init__(
         self,
         starting_state: Any,
         state_space: Any,
         action_space: Any,
-        alpha: float = 0.001,
-        gamma: float = 0.95,
-        exploration_strategy: Any = None,
-        buffer_size: int = 50000,
-        batch_size: int = 64,
-        target_update_freq: int = 1000,
-        hidden_dims: List[int] = None,
-        device: str = None,
+        config: Optional[DQNConfig] = None,
+        exploration: Optional[EpsilonGreedy] = None,
     ):
-        """Initialize DQN agent.
-
-        Args:
-            starting_state: Initial state
-            state_space: State space (gymnasium.Space)
-            action_space: Action space (gymnasium.Space)
-            alpha: Learning rate for optimizer
-            gamma: Discount factor
-            exploration_strategy: Exploration strategy (e.g., EpsilonGreedy)
-            buffer_size: Size of replay buffer
-            batch_size: Mini-batch size for training
-            target_update_freq: Frequency of target network updates (in steps)
-            hidden_dims: Hidden layer dimensions for Q-network
-            device: Device to run on ('cuda' or 'cpu', auto-detect if None)
-        """
-        self.state = starting_state
-        self.state_space = state_space
-        self.action_space = action_space
-        self.action = None
-        self.gamma = gamma
-        self.exploration = exploration_strategy
-        self.acc_reward = 0
-
-        # DQN-specific parameters
-        self.batch_size = batch_size
-        self.target_update_freq = target_update_freq
-        self.learn_step_counter = 0
-
-        # Determine state dimension from actual starting_state (most reliable)
-        # DQN works with continuous observations, not encoded discrete states
-        if isinstance(starting_state, np.ndarray):
-            self.state_dim = int(np.prod(starting_state.shape))
-        elif isinstance(starting_state, (list, tuple)):
-            self.state_dim = len(starting_state)
-        elif isinstance(starting_state, (int, np.integer, float)):
-            self.state_dim = 1
-        elif hasattr(state_space, "shape") and len(state_space.shape) > 0:
-            # Fallback to state_space if starting_state is unavailable
-            self.state_dim = int(np.prod(state_space.shape))
-        elif hasattr(state_space, "n"):
-            # Discrete space
-            self.state_dim = state_space.n
-        else:
-            raise ValueError(
-                f"Cannot determine state dimension from starting_state: {starting_state} "
-                f"(type: {type(starting_state)}) or state_space: {state_space}"
-            )
-
-        # Action dimension
-        self.action_dim = action_space.n
-
-        # Setup device
-        if device is None:
+        # config
+        self.cfg = config or DQNConfig()
+        if self.cfg.device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
-            self.device = torch.device(device)
+            self.device = torch.device(self.cfg.device)
 
-        # Initialize networks
-        self.q_network = QNetwork(self.state_dim, self.action_dim, hidden_dims).to(
-            self.device
-        )
-        self.target_network = QNetwork(self.state_dim, self.action_dim, hidden_dims).to(
-            self.device
-        )
-        self.target_network.load_state_dict(self.q_network.state_dict())
-        self.target_network.eval()
+        # seeds
+        torch.manual_seed(self.cfg.seed)
+        np.random.seed(self.cfg.seed)
+        random.seed(self.cfg.seed)
 
-        # Optimizer
-        self.optimizer = optim.Adam(self.q_network.parameters(), lr=alpha)
-
-        # Loss function
-        self.criterion = nn.MSELoss()
-
-        # Replay buffer
-        self.replay_buffer = ReplayBuffer(buffer_size)
-
-        # Q-table for exploration strategy compatibility
-        # This is maintained as a fallback for exploration strategies that expect it
-        self.q_table = {}
-
-    def _state_to_tensor(self, state: Any) -> torch.Tensor:
-        """Convert state to tensor format.
-
-        Args:
-            state: State in any format (preferably numpy array from observation)
-
-        Returns:
-            State as tensor with shape (state_dim,)
-        """
-        # Convert to numpy array first
-        if isinstance(state, np.ndarray):
-            state_array = state.flatten().astype(np.float32)
-        elif isinstance(state, (tuple, list)):
-            state_array = np.array(state, dtype=np.float32).flatten()
-        elif isinstance(state, (int, np.integer, float, np.floating)):
-            # Single scalar value
-            state_array = np.array([float(state)], dtype=np.float32)
-        elif isinstance(state, torch.Tensor):
-            # Already a tensor
-            return state.flatten().float().to(self.device)
+        # state / action dims
+        self.state = self._to_state_np(starting_state)
+        self.state_dim = int(np.prod(self.state.shape))
+        # action space assumed discrete
+        if hasattr(action_space, 'n'):
+            self.n_actions = int(action_space.n)
+        elif isinstance(action_space, int):
+            self.n_actions = int(action_space)
         else:
-            raise TypeError(
-                f"Unsupported state type: {type(state)}. "
-                f"Expected numpy array, list, tuple, or scalar. "
-                f"State value: {state}"
-            )
+            raise ValueError('action_space must have .n or be an int')
 
-        # Validate dimensions
-        if state_array.shape[0] != self.state_dim:
-            raise ValueError(
-                f"State dimension mismatch: expected {self.state_dim}, "
-                f"got {state_array.shape[0]}. State: {state}"
-            )
+        # networks
+        self.q_net = QNetwork(self.state_dim, self.n_actions, hidden_dims=self.cfg.hidden_dims).to(self.device)
+        self.target_net = QNetwork(self.state_dim, self.n_actions, hidden_dims=self.cfg.hidden_dims).to(self.device)
+        self.target_net.load_state_dict(self.q_net.state_dict())
+        self.target_net.eval()
 
-        return torch.FloatTensor(state_array).to(self.device)
+        # optimizer & loss
+        self.opt = optim.Adam(self.q_net.parameters(), lr=self.cfg.lr)
+        # we'll use functional smooth_l1
 
-    def _get_q_values(self, state: Any) -> np.ndarray:
-        """Get Q-values for a state using the Q-network.
+        # replay
+        self.replay = ReplayBuffer(self.cfg.buffer_size, seed=self.cfg.seed)
 
-        Args:
-            state: Current state
+        # exploration
+        self.exploration = exploration or EpsilonGreedy()
 
-        Returns:
-            Array of Q-values for each action
-        """
-        self.q_network.eval()
-        with torch.no_grad():
-            state_tensor = self._state_to_tensor(state).unsqueeze(0)
-            q_values = self.q_network(state_tensor).cpu().numpy()[0]
-        self.q_network.train()
-        return q_values
+        # bookkeeping
+        self.step_count = 0
+        self.learn_steps = 0
+        self.last_action: Optional[int] = None
 
-    def _state_to_hashable(self, state: Any) -> tuple:
-        """Convert state to hashable format for use as dict key.
-
-        Args:
-            state: State in any format
-
-        Returns:
-            Hashable representation (tuple)
-        """
+    # -------------------- helper --------------------
+    def _to_state_np(self, state: Any) -> np.ndarray:
         if isinstance(state, np.ndarray):
-            return tuple(state.flatten())
+            arr = state.astype(np.float32, copy=False)
         elif isinstance(state, (list, tuple)):
-            return tuple(state)
-        elif isinstance(state, (int, float, str)):
-            return (state,)
+            arr = np.asarray(state, dtype=np.float32).reshape(-1)
+        elif isinstance(state, (int, float)):
+            arr = np.array([float(state)], dtype=np.float32)
+        elif state is None:
+            arr = np.zeros((self.state_dim,), dtype=np.float32) if hasattr(self, 'state_dim') else np.zeros((1,), dtype=np.float32)
         else:
-            # Try to convert to tuple
-            return tuple(np.array(state).flatten())
+            # try convert
+            arr = np.asarray(state, dtype=np.float32).reshape(-1)
+        return arr
 
+    def _to_tensor(self, state_np: np.ndarray) -> torch.Tensor:
+        t = torch.from_numpy(state_np.astype(np.float32)).view(1, -1).to(self.device)
+        return t
+
+    # -------------------- public API --------------------
     def act(self) -> int:
-        """Choose action using exploration strategy and Q-network.
-
-        Returns:
-            Selected action
-        """
-        # Get Q-values from network
-        q_values = self._get_q_values(self.state)
-
-        # Use exploration strategy if provided
-        if self.exploration is not None:
-            # Convert state to hashable for q_table compatibility
-            state_key = self._state_to_hashable(self.state)
-
-            # Update q_table with current Q-values
-            self.q_table[state_key] = q_values
-
-            # Use exploration strategy
-            self.action = self.exploration.choose(
-                self.q_table, state_key, self.action_space
-            )
+        """Chọn action (epsilon-greedy)."""
+        self.step_count += 1
+        eps = self.exploration.get_epsilon(self.step_count)
+        if random.random() < eps:
+            a = random.randrange(self.n_actions)
         else:
-            # Greedy action selection
-            self.action = int(np.argmax(q_values))
+            with torch.no_grad():
+                s_t = self._to_tensor(self.state)
+                q = self.q_net(s_t)
+                a = int(torch.argmax(q, dim=1).item())
+        self.last_action = a
+        return a
 
-        return self.action
+    def store_transition(self, state, action, reward, next_state, done: bool):
+        self.replay.push(state, action, reward, next_state, done)
 
     def learn(self, next_state: Any, reward: float, done: bool = False):
-        """Update Q-network with new experience.
+        """Lưu transition và thực hiện 1 step huấn luyện (nếu đủ dữ liệu).
 
-        Args:
-            next_state: Next state
-            reward: Reward received
-            done: Whether episode is done
+        Ghi chú: giữ API giống sumo-rl: learn(next_state, reward, done)
         """
-        # Store transition in replay buffer
-        self.replay_buffer.push(self.state, self.action, reward, next_state, done)
+        # push transition (use last_action; if None, choose random)
+        a = self.last_action if self.last_action is not None else random.randrange(self.n_actions)
+        self.replay.push(self.state, a, reward, next_state, done)
 
-        # Update state and accumulate reward
-        self.state = next_state
-        self.acc_reward += reward
+        # advance state
+        self.state = self._to_state_np(next_state)
 
-        # Update q_table for next state (for exploration strategy compatibility)
-        # Note: We only update it when exploration strategy is being used
-        if self.exploration is not None:
-            next_state_key = self._state_to_hashable(next_state)
-            if next_state_key not in self.q_table:
-                self.q_table[next_state_key] = self._get_q_values(next_state)
-
-        # Train only if we have enough samples
-        if len(self.replay_buffer) < self.batch_size:
+        # training condition
+        if len(self.replay) < self.cfg.start_learning_after:
+            return
+        if self.step_count % self.cfg.train_freq != 0:
             return
 
-        # Sample mini-batch from replay buffer
-        states, actions, rewards, next_states, dones = self.replay_buffer.sample(
-            self.batch_size
-        )
+        # sample
+        s, a_batch, r, s2, d = self.replay.sample(self.cfg.batch_size)
 
-        # Convert to tensors
-        state_batch = torch.FloatTensor(
-            np.array([self._state_to_tensor(s).cpu().numpy() for s in states])
-        ).to(self.device)
-        action_batch = torch.LongTensor(actions).to(self.device)
-        reward_batch = torch.FloatTensor(rewards).to(self.device)
-        next_state_batch = torch.FloatTensor(
-            np.array([self._state_to_tensor(s).cpu().numpy() for s in next_states])
-        ).to(self.device)
-        done_batch = torch.FloatTensor(dones).to(self.device)
+        # to tensors
+        s_t = torch.from_numpy(s).float().to(self.device)
+        a_t = torch.from_numpy(a_batch).long().to(self.device)
+        r_t = torch.from_numpy(r).float().to(self.device)
+        s2_t = torch.from_numpy(s2).float().to(self.device)
+        d_t = torch.from_numpy(d).float().to(self.device)
 
-        # Current Q-values
-        current_q_values = self.q_network(state_batch).gather(
-            1, action_batch.unsqueeze(1)
-        ).squeeze(1)
+        # current Q for taken actions
+        q_values = self.q_net(s_t).gather(1, a_t.view(-1, 1)).squeeze(1)
 
-        # Target Q-values
+        # compute targets using target network
         with torch.no_grad():
-            next_q_values = self.target_network(next_state_batch).max(1)[0]
-            target_q_values = reward_batch + (1 - done_batch) * self.gamma * next_q_values
+            q_next = self.target_net(s2_t).max(1)[0]
+            target = r_t + self.cfg.gamma * q_next * (1.0 - d_t)
 
-        # Compute loss
-        loss = self.criterion(current_q_values, target_q_values)
+        # loss (smooth l1)
+        loss = F.smooth_l1_loss(q_values, target)
 
-        # Optimize
-        self.optimizer.zero_grad()
+        # optimize
+        self.opt.zero_grad(set_to_none=True)
         loss.backward()
-        self.optimizer.step()
+        if self.cfg.grad_clip_norm is not None:
+            nn.utils.clip_grad_norm_(self.q_net.parameters(), self.cfg.grad_clip_norm)
+        self.opt.step()
 
-        # Update target network
-        self.learn_step_counter += 1
-        if self.learn_step_counter % self.target_update_freq == 0:
-            self.target_network.load_state_dict(self.q_network.state_dict())
+        # target update
+        self.learn_steps += 1
+        if self.learn_steps % self.cfg.target_update_freq == 0:
+            if self.cfg.tau >= 1.0:
+                # hard update
+                self.target_net.load_state_dict(self.q_net.state_dict())
+            else:
+                # soft update (Polyak)
+                with torch.no_grad():
+                    for p_t, p in zip(self.target_net.parameters(), self.q_net.parameters()):
+                        p_t.data.mul_(1 - self.cfg.tau).add_(self.cfg.tau * p.data)
 
     def save(self, path: str):
-        """Save agent's networks and state.
-
-        Args:
-            path: Path to save checkpoint
-        """
-        checkpoint = {
-            "q_network": self.q_network.state_dict(),
-            "target_network": self.target_network.state_dict(),
-            "optimizer": self.optimizer.state_dict(),
-            "learn_step_counter": self.learn_step_counter,
+        ckpt = {
+            'q_net': self.q_net.state_dict(),
+            'target_net': self.target_net.state_dict(),
+            'opt': self.opt.state_dict(),
+            'cfg': self.cfg,
+            'step_count': self.step_count,
+            'learn_steps': self.learn_steps,
         }
-        torch.save(checkpoint, path)
+        torch.save(ckpt, path)
 
-    def load(self, path: str):
-        """Load agent's networks and state.
+    def load(self, path: str, map_location: Optional[str] = None):
+        map_loc = map_location or (self.device)
+        ckpt = torch.load(path, map_location=map_loc)
+        self.q_net.load_state_dict(ckpt['q_net'])
+        self.target_net.load_state_dict(ckpt.get('target_net', ckpt['q_net']))
+        if 'opt' in ckpt:
+            try:
+                self.opt.load_state_dict(ckpt['opt'])
+            except Exception:
+                # optimizer state may be incompatible across devices/different net shapes
+                pass
+        # restore counters if present
+        self.step_count = ckpt.get('step_count', self.step_count)
+        self.learn_steps = ckpt.get('learn_steps', self.learn_steps)
 
-        Args:
-            path: Path to load checkpoint from
-        """
-        checkpoint = torch.load(path, map_location=self.device)
-        self.q_network.load_state_dict(checkpoint["q_network"])
-        self.target_network.load_state_dict(checkpoint["target_network"])
-        self.optimizer.load_state_dict(checkpoint["optimizer"])
-        self.learn_step_counter = checkpoint["learn_step_counter"]
+    # helper to set state externally (useful on env.reset())
+    def set_state(self, state: Any):
+        self.state = self._to_state_np(state)
+
+
+# If run as script, provide a tiny smoke test (CPU-only) to ensure no syntax/runtime errors
+if __name__ == '__main__':
+    class DummySpace:
+        def __init__(self, n=None, shape=None):
+            self.n = n
+            self.shape = shape
+
+    # tiny smoke test
+    state0 = np.zeros(4)
+    action_space = DummySpace(n=2)
+    agent = DQNAgent(starting_state=state0, state_space=None, action_space=action_space)
+    for i in range(10):
+        a = agent.act()
+        next_s = state0 + np.random.randn(4) * 0.01
+        agent.learn(next_s, reward=0.0, done=False)
+    print('smoke test done')
